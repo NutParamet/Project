@@ -14,33 +14,19 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::where('user_id', Auth::id())->with('orderDetails.medicine')->get();
-        return inertia('Orders/Index', compact('orders'));
+        return inertia('Order',['orders' => $orders]);
     }
 
-    public function placeOrder()
-    {
-        DB::transaction(function () {
-            $cartItems = CartItem::where('user_id', Auth::id())->get();
-            $totalPrice = $cartItems->sum(fn($item) => $item->medicine->price * $item->quantity);
+    public function destroy(Request $request,$id)
+{
+    $order = Order::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
 
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'total_price' => $totalPrice,
-                'status' => 'pending',
-            ]);
+    DB::transaction(function () use ($order) {
+        $order->orderDetails()->delete();
+        $order->delete();
+    });
 
-            foreach ($cartItems as $item) {
-                OrderDetail::create([
-                    'order_id' => $order->id,
-                    'medicine_id' => $item->medicine_id,
-                    'quantity' => $item->quantity,
-                    'price' => $item->medicine->price,
-                ]);
-            }
+    return redirect()->route('order')->with('success', 'Order deleted successfully!');
+}
 
-            CartItem::where('user_id', Auth::id())->delete();
-        });
-
-        return redirect()->route('orders.index')->with('success', 'Order placed successfully!');
-    }
 }

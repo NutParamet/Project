@@ -8,12 +8,13 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CartController;
 use App\Http\Middleware\AdminMiddleware;
-use App\Http\Controllers\Ordersontroller;
+use App\Http\Controllers\OrderController;
 use App\Models\Medicine;
 
-Route::get('/order', function () {
-    return Inertia::render('Order');
-})->middleware(['auth', 'verified',])->name('order');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/order', [OrderController::class, 'index'])->name('order');
+    Route::delete('/order/delete/{id}', [OrderController::class, 'destroy'])->name('order.destroy');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -21,9 +22,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
-});
+// Route::middleware(['auth', 'admin'])->group(function () {
+//     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+// });
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');

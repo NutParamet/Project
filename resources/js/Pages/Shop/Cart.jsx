@@ -5,7 +5,7 @@ import NavbarForAuth from "@/Components/NavbarForAuth";
 import { router } from '@inertiajs/react';
 import { Inertia } from '@inertiajs/inertia';
 
-const Cart = ({ cartItems, auth, userId, flash }) => { // รับ flash ผ่าน props
+const Cart = ({ cartItems, auth, userId, flash }) => {
     const [cartQuantities, setCartQuantities] = useState({});
     const [totalPrice, setTotalPrice] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -74,7 +74,7 @@ const Cart = ({ cartItems, auth, userId, flash }) => { // รับ flash ผ่
         router.delete(`/cart/delete/${medicineId}`, {
             onSuccess: () => {
                 setMessage({ type: 'success', text: 'Item removed from cart!' });
-            router.reload(); // รีโหลดหน้าเพื่ออัปเดตข้อมูล
+                router.reload(); // รีโหลดหน้าเพื่ออัปเดตข้อมูล
             },
             onError: (errors) => {
                 setMessage({ type: 'error', text: 'Error removing item from cart.' });
@@ -106,7 +106,7 @@ const Cart = ({ cartItems, auth, userId, flash }) => { // รับ flash ผ่
     };
 
     return (
-        <div className="cart-container bg-gray-50 min-h-screen">
+        <div className="cart-container bg-gradient-to-b from-blue-50 to-white min-h-screen">
             {auth ? <NavbarForAuth /> : <Navbar />}
 
             {/* แสดงข้อความแจ้งเตือน */}
@@ -116,22 +116,25 @@ const Cart = ({ cartItems, auth, userId, flash }) => { // รับ flash ผ่
                 </div>
             )}
 
-            <div className="cart-items mt-10 mx-20">
-                <h2 className="text-xl font-semibold text-gray-700 mb-6">Your Cart</h2>
+            <div className="cart-items mt-10 mx-4 sm:mx-8 lg:mx-20">
+                <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Your Cart</h2>
                 {cartItems.length === 0 ? (
                     <div className="text-center py-10">
                         <p className="text-gray-600 text-lg mb-4">Your cart is empty.</p>
                         <Link
                             href="/"
-                            className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                            className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
                         >
                             Continue Shopping
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {cartItems.map((item) => (
-                            <div key={item.id} className="cart-item bg-white p-6 rounded-lg shadow-xl">
+                            <div
+                                key={item.id}
+                                className="cart-item bg-white p-6 rounded-lg shadow-xl transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                            >
                                 <img
                                     src={item.medicine.image}
                                     alt={item.medicine.name}
@@ -147,10 +150,10 @@ const Cart = ({ cartItems, auth, userId, flash }) => { // รับ flash ผ่
                                         min="1"
                                         max="10"
                                         onChange={(e) => handleQuantityChange(item.medicine.id, e.target.value)}
-                                        className="border rounded-lg p-3 w-24 text-center text-lg"
+                                        className="border rounded-lg p-3 w-24 text-center text-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                                     />
                                     <button
-                                        className="ml-4 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors"
+                                        className="ml-4 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors shadow-lg"
                                         onClick={() => removeFromCart(item.medicine.id)}
                                     >
                                         Remove
@@ -164,9 +167,9 @@ const Cart = ({ cartItems, auth, userId, flash }) => { // รับ flash ผ่
                 {/* Total Price และ Buy Button */}
                 {cartItems.length > 0 && (
                     <div className="total-price mt-8 text-right">
-                        <h3 className="text-xl font-semibold text-gray-700">Total Price: ฿{totalPrice.toFixed(2)}</h3>
+                        <h3 className="text-2xl font-bold text-gray-800">Total Price: ฿{totalPrice.toFixed(2)}</h3>
                         <button
-                            className="mt-4 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors"
+                            className="mt-4 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-lg"
                             onClick={handleBuy}
                             disabled={isLoading}
                         >
@@ -176,7 +179,7 @@ const Cart = ({ cartItems, auth, userId, flash }) => { // รับ flash ผ่
                 )}
             </div>
 
-            <footer className="mt-20 py-10 text-center text-gray-600">
+            <footer className="mt-20 py-10 text-center text-gray-600 bg-white">
                 <p className="text-sm">
                     © 2025 Medicine Shop | All Rights Reserved | Designed with ♥
                 </p>

@@ -3,15 +3,18 @@ import { router } from '@inertiajs/react';
 import Navbar from "@/Components/Navbar";
 import NavbarForAuth from "@/Components/NavbarForAuth";
 
-const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => { // รับ cartItems จาก props
+const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => {
     const [selectedCategory, setSelectedCategory] = React.useState(null);
     const [cartQuantities, setCartQuantities] = React.useState({});
+    const [searchQuery, setSearchQuery] = React.useState('');
 
+    // กรองสินค้าตามหมวดหมู่และคำค้นหา
     const filteredMedicines = medicines.filter(medicine => {
         const matchesCategory = selectedCategory
             ? medicine.category_id === selectedCategory
             : true;
-        return matchesCategory;
+        const matchesSearch = medicine.name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
     });
 
     const handleCategoryChange = (categoryId) => {
@@ -32,11 +35,9 @@ const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => {
             quantity: quantity,
         };
 
-        // เช็คว่ามีสินค้านี้ในตะกร้าแล้วหรือยัง
         const existingItem = cartItems.find(item => item.medicine_id === medicineId);
 
         if (existingItem) {
-            // ถ้ามีสินค้านี้อยู่แล้ว อัปเดตตะกร้า
             router.put(`/cart/update/${existingItem.id}`, formData, {
                 onSuccess: () => {
                     console.log("Cart updated successfully!");
@@ -46,7 +47,6 @@ const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => {
                 }
             });
         } else {
-            // ถ้ายังไม่มีในตะกร้า ให้เพิ่มสินค้าเข้าไป
             router.post(`/cart/add`, formData, {
                 onSuccess: () => {
                     console.log("Item added to cart successfully!");
@@ -59,28 +59,36 @@ const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => {
     };
 
     return (
-        <div className="shop-container bg-gray-50 min-h-screen">
+        <div className="shop-container bg-gradient-to-b from-blue-50 to-white min-h-screen">
             {auth ? <NavbarForAuth /> : <Navbar />}
 
-            <div className="search-bar mb-10 mt-10 flex justify-center">
+            {/* Hero Section */}
+            <div className="hero-section bg-blue-600 text-white py-20 text-center">
+                <h1 className="text-5xl font-bold mb-4">Welcome to Medicine Shop</h1>
+                <p className="text-xl">Your trusted source for quality medicines and health products.</p>
+            </div>
+
+            {/* Search Bar */}
+            <div className="search-bar mb-10 mt-10 flex justify-center px-4">
                 <input
                     type="text"
                     placeholder="Search medicines..."
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="border p-3 rounded-lg w-full max-w-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="border p-3 rounded-lg w-full max-w-lg focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-lg"
                 />
             </div>
 
-            <div className="categories mb-10 text-center mx-20">
-                <h2 className="text-xl font-semibold text-gray-700 mb-4">Browse by Category</h2>
-                <div className="flex flex-wrap justify-center gap-6">
+            {/* Categories */}
+            <div className="categories mb-10 text-center mx-4">
+                <h2 className="text-2xl font-semibold text-gray-700 mb-6">Browse by Category</h2>
+                <div className="flex flex-wrap justify-center gap-4">
                     {categories.map((category) => (
                         <button
                             key={category.id}
-                            className={`py-2 px-6 rounded-lg text-lg font-medium
+                            className={`py-3 px-6 rounded-full text-lg font-medium transition-all duration-300
                               ${selectedCategory === category.id
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-200 text-gray-800 hover:bg-blue-600 hover:text-white'}`}
+                                    ? 'bg-blue-600 text-white shadow-lg'
+                                    : 'bg-white text-gray-800 hover:bg-blue-600 hover:text-white hover:shadow-lg'}`}
                             onClick={() => handleCategoryChange(category.id)}
                         >
                             {category.name}
@@ -89,7 +97,8 @@ const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => {
                 </div>
             </div>
 
-            <div className="medicines grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mx-20">
+            {/* Medicines Grid */}
+            <div className="medicines grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mx-4 px-4">
                 {filteredMedicines.map((medicine) => (
                     <div
                         key={medicine.id}
@@ -116,11 +125,11 @@ const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => {
                                     min="1"
                                     max="10"
                                     onChange={(e) => handleQuantityChange(medicine.id, e.target.value)}
-                                    className="border rounded-lg p-3 w-24 text-center text-lg"
+                                    className="border rounded-lg p-3 w-24 text-center text-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                                 />
                                 <button
                                     type="submit"
-                                    className="ml-4 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="ml-4 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
                                 >
                                     Add to Cart
                                 </button>
@@ -130,7 +139,8 @@ const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => {
                 ))}
             </div>
 
-            <footer className="mt-20 py-10 text-center text-gray-600">
+            {/* Footer */}
+            <footer className="mt-20 py-10 text-center text-gray-600 bg-white">
                 <p className="text-sm">
                     © 2025 Medicine Shop | All Rights Reserved | Designed with ♥
                 </p>

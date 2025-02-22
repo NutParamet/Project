@@ -17,7 +17,6 @@ class ShopSeeder extends Seeder
      */
     public function run(): void
     {
-        Medicine::factory(10)->create(); // สร้าง medicine 10 รายการ
-        CartItem::factory(10)->create();
+        Medicine::factory()->count(20)->create();
     }
 }

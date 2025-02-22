@@ -19,8 +19,14 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
+        $medicineNames = [
+            'Paracetamol', 'Ibuprofen', 'Amoxicillin', 'Omeprazole', 'Loratadine',
+            'Cetirizine', 'Aspirin', 'Metformin', 'Atorvastatin', 'Simvastatin',
+            'Losartan', 'Amlodipine', 'Levothyroxine', 'Metoprolol', 'Pantoprazole',
+            'Prednisone', 'Albuterol', 'Gabapentin', 'Hydrochlorothiazide', 'Sertraline'
+        ];
         return [
-            'name' => $this->faker->word,
+            'name' => $this->faker->randomElement($medicineNames),
         ];
     }
 }

@@ -35,10 +35,4 @@ return new class extends Migration {
         Schema::dropIfExists('medicines');
     }
 
-    public function decrementStock($quantity)
-    {
-        // ลดจำนวนสต็อกในฐานข้อมูล
-        $this->stock_quantity -= $quantity;
-        $this->save();  // บันทึกการเปลี่ยนแปลง
-    }
 };

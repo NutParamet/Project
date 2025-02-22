@@ -23,12 +23,12 @@ class CartItemFactory extends Factory
      */
     public function definition()
     {
-        return [
-            'user_id' => User::factory(), // สร้าง user ใหม่โดยใช้ Factory
-            'medicine_id' => Medicine::factory(), // สร้าง medicine ใหม่โดยใช้ Factory
-            'quantity' => $this->faker->numberBetween(1, 10), // สุ่มจำนวนสินค้า 1-10
-            'created_at' => now(), // ตั้งค่า created_at
-            'updated_at' => now(), // ตั้งค่า updated_at
-        ];
+        // return [
+        //     'user_id' => User::factory(), // สร้าง user ใหม่โดยใช้ Factory
+        //     'medicine_id' => Medicine::factory(), // สร้าง medicine ใหม่โดยใช้ Factory
+        //     'quantity' => $this->faker->numberBetween(1, 10), // สุ่มจำนวนสินค้า 1-10
+        //     'created_at' => now(), // ตั้งค่า created_at
+        //     'updated_at' => now(), // ตั้งค่า updated_at
+        // ];
     }
 }
