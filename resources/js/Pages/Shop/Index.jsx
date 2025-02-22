@@ -96,7 +96,7 @@ const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => {
                         className="medicine-card bg-white p-6 rounded-lg shadow-xl transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
                     >
                         <img
-                            src={medicine.image_url}
+                            src={medicine.image}
                             alt={medicine.name}
                             className="w-full h-48 object-cover rounded-lg mb-4"
                         />

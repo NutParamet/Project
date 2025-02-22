@@ -1,36 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from '@inertiajs/inertia-react';
 import Navbar from "@/Components/Navbar";
 import NavbarForAuth from "@/Components/NavbarForAuth";
 import { router } from '@inertiajs/react';
+import { Inertia } from '@inertiajs/inertia';
 
-const Cart = ({ cartItems, auth, userId }) => {
+const Cart = ({ cartItems, auth, userId, flash }) => { // รับ flash ผ่าน props
     const [cartQuantities, setCartQuantities] = useState({});
+    const [totalPrice, setTotalPrice] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState({ type: '', text: '' });
+
+    // คำนวณ total price
+    useEffect(() => {
+        const total = cartItems.reduce((acc, item) => {
+            const quantity = cartQuantities[item.medicine.id] || item.quantity;
+            return acc + item.medicine.price * quantity;
+        }, 0);
+        setTotalPrice(total);
+    }, [cartItems, cartQuantities]);
+
+    // แสดง Flash Message จาก Laravel
+    useEffect(() => {
+        if (flash?.success) {
+            setMessage({ type: 'success', text: flash.success });
+        }
+        if (flash?.error) {
+            setMessage({ type: 'error', text: flash.error });
+        }
+    }, [flash]);
+
+    // ลบข้อความแจ้งเตือนหลังจาก 3 วินาที
+    useEffect(() => {
+        if (message.text) {
+            const timer = setTimeout(() => {
+                setMessage({ type: '', text: '' });
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [message]);
 
     const handleQuantityChange = (medicineId, quantity) => {
+        const newQuantity = parseInt(quantity, 10);
+
+        if (newQuantity < 1 || newQuantity > 10) {
+            setMessage({ type: 'error', text: 'Quantity must be between 1 and 10.' });
+            return;
+        }
+
         setCartQuantities(prevQuantities => ({
             ...prevQuantities,
-            [medicineId]: quantity,
+            [medicineId]: newQuantity,
         }));
-    };
 
-    const updateCartItem = (medicineId) => {
-        const quantity = cartQuantities[medicineId] || 1;
         const formData = {
             user_id: userId,
             medicine_id: medicineId,
-            quantity: quantity,
+            quantity: newQuantity,
         };
 
         router.put(`/cart/update/${medicineId}`, formData, {
-            onSuccess: (data) => {
-                setCartQuantities(prevQuantities => ({
-                    ...prevQuantities,
-                    [medicineId]: data.updatedQuantity,
-                }));
-                console.log("Cart updated successfully!");
+            onSuccess: () => {
+                setMessage({ type: 'success', text: 'Cart updated successfully!' });
             },
             onError: (errors) => {
+                setMessage({ type: 'error', text: 'Error updating cart.' });
                 console.error("Error updating cart:", errors);
             }
         });
@@ -39,10 +73,34 @@ const Cart = ({ cartItems, auth, userId }) => {
     const removeFromCart = (medicineId) => {
         router.delete(`/cart/delete/${medicineId}`, {
             onSuccess: () => {
-                console.log("Item removed from cart!");
+                setMessage({ type: 'success', text: 'Item removed from cart!' });
+            router.reload(); // รีโหลดหน้าเพื่ออัปเดตข้อมูล
             },
             onError: (errors) => {
+                setMessage({ type: 'error', text: 'Error removing item from cart.' });
                 console.error("Error removing item from cart:", errors);
+            }
+        });
+    };
+
+    const handleBuy = () => {
+        if (cartItems.length === 0) {
+            setMessage({ type: 'error', text: 'Your cart is empty.' });
+            return;
+        }
+
+        setIsLoading(true);
+
+        Inertia.post('/cart/buy', {}, {
+            onSuccess: () => {
+                setMessage({ type: 'success', text: 'Order placed successfully!' });
+                setIsLoading(false);
+                router.reload(); // รีโหลดหน้าเพื่ออัปเดตข้อมูล
+            },
+            onError: (error) => {
+                setMessage({ type: 'error', text: error.response.data.message });
+                setIsLoading(false);
+                console.error('Error placing order:', error.response.data.message);
             }
         });
     };
@@ -51,16 +109,31 @@ const Cart = ({ cartItems, auth, userId }) => {
         <div className="cart-container bg-gray-50 min-h-screen">
             {auth ? <NavbarForAuth /> : <Navbar />}
 
+            {/* แสดงข้อความแจ้งเตือน */}
+            {message.text && (
+                <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+                    {message.text}
+                </div>
+            )}
+
             <div className="cart-items mt-10 mx-20">
                 <h2 className="text-xl font-semibold text-gray-700 mb-6">Your Cart</h2>
                 {cartItems.length === 0 ? (
-                    <p>Your cart is empty.</p>
+                    <div className="text-center py-10">
+                        <p className="text-gray-600 text-lg mb-4">Your cart is empty.</p>
+                        <Link
+                            href="/"
+                            className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            Continue Shopping
+                        </Link>
+                    </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                         {cartItems.map((item) => (
                             <div key={item.id} className="cart-item bg-white p-6 rounded-lg shadow-xl">
                                 <img
-                                    src={item.medicine.image_url}
+                                    src={item.medicine.image}
                                     alt={item.medicine.name}
                                     className="w-full h-48 object-cover rounded-lg mb-4"
                                 />
@@ -70,27 +143,35 @@ const Cart = ({ cartItems, auth, userId }) => {
                                 <div className="quantity flex items-center mt-4 mb-6">
                                     <input
                                         type="number"
-                                        value={cartQuantities[item.medicine.id] || item.quantity} // ใช้ item.medicine.id
+                                        value={cartQuantities[item.medicine.id] || item.quantity}
                                         min="1"
                                         max="10"
-                                        onChange={(e) => handleQuantityChange(item.medicine.id, e.target.value)} // ใช้ item.medicine.id
+                                        onChange={(e) => handleQuantityChange(item.medicine.id, e.target.value)}
                                         className="border rounded-lg p-3 w-24 text-center text-lg"
                                     />
                                     <button
-                                        className="ml-4 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-                                        onClick={() => updateCartItem(item.medicine.id)} // ใช้ item.medicine.id
-                                    >
-                                        Update Quantity
-                                    </button>
-                                    <button
                                         className="ml-4 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors"
-                                        onClick={() => removeFromCart(item.medicine.id)} // ใช้ item.medicine.id
+                                        onClick={() => removeFromCart(item.medicine.id)}
                                     >
                                         Remove
                                     </button>
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Total Price และ Buy Button */}
+                {cartItems.length > 0 && (
+                    <div className="total-price mt-8 text-right">
+                        <h3 className="text-xl font-semibold text-gray-700">Total Price: ฿{totalPrice.toFixed(2)}</h3>
+                        <button
+                            className="mt-4 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors"
+                            onClick={handleBuy}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Processing..." : "Buy Now"}
+                        </button>
                     </div>
                 )}
             </div>
