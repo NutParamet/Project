@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Medicine;
 use App\Models\Category;
+use App\Models\CartItem;
 
 class ShopSeeder extends Seeder
 {
@@ -17,5 +18,6 @@ class ShopSeeder extends Seeder
     public function run(): void
     {
         Medicine::factory(10)->create(); // สร้าง medicine 10 รายการ
+        CartItem::factory(10)->create();
     }
 }

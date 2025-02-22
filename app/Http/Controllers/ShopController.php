@@ -14,23 +14,12 @@ class ShopController extends Controller
     {
         $medicines = Medicine::with('category')->get();
         $categories = Category::all();
-        return inertia('Shop/Index', compact('medicines', 'categories'));
-    }
 
-    public function addToCart(Request $request, $id)
-    {
-        $medicine = Medicine::findOrFail($id);
-
-        $cartItem = CartItem::updateOrCreate(
-            [
-                'user_id' => Auth::id(),
-                'medicine_id' => $medicine->id
-            ],
-            [
-                'quantity' => $request->input('quantity', 1)
-            ]
-        );
-
-        return redirect()->route('shop.index')->with('success', 'Added to cart!');
+        return inertia('Shop/Index', [
+            'medicines' => $medicines,
+            'categories' => $categories,
+            'auth' => auth()->check(),
+            'userId' => auth()->id(),
+        ]);
     }
 }

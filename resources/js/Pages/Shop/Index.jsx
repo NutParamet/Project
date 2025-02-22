@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { router } from '@inertiajs/react';
 import Navbar from "@/Components/Navbar";
+import NavbarForAuth from "@/Components/NavbarForAuth";
 
-const ShopIndex = ({ medicines, categories }) => {
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [cartQuantities, setCartQuantities] = useState({});
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isNavOpen, setIsNavOpen] = useState(false);
+const ShopIndex = ({ medicines, categories, auth, userId, cartItems = [] }) => { // รับ cartItems จาก props
+    const [selectedCategory, setSelectedCategory] = React.useState(null);
+    const [cartQuantities, setCartQuantities] = React.useState({});
 
     const filteredMedicines = medicines.filter(medicine => {
         const matchesCategory = selectedCategory
             ? medicine.category_id === selectedCategory
             : true;
-        const matchesSearch = medicine.name.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
+        return matchesCategory;
     });
 
     const handleCategoryChange = (categoryId) => {
@@ -28,24 +27,50 @@ const ShopIndex = ({ medicines, categories }) => {
 
     const addToCart = (medicineId) => {
         const quantity = cartQuantities[medicineId] || 1;
-        console.log(`Adding to cart: ${medicineId}, Quantity: ${quantity}`);
+        const formData = {
+            medicine_id: medicineId,
+            quantity: quantity,
+        };
+
+        // เช็คว่ามีสินค้านี้ในตะกร้าแล้วหรือยัง
+        const existingItem = cartItems.find(item => item.medicine_id === medicineId);
+
+        if (existingItem) {
+            // ถ้ามีสินค้านี้อยู่แล้ว อัปเดตตะกร้า
+            router.put(`/cart/update/${existingItem.id}`, formData, {
+                onSuccess: () => {
+                    console.log("Cart updated successfully!");
+                },
+                onError: (errors) => {
+                    console.error("Error updating cart:", errors);
+                }
+            });
+        } else {
+            // ถ้ายังไม่มีในตะกร้า ให้เพิ่มสินค้าเข้าไป
+            router.post(`/cart/add`, formData, {
+                onSuccess: () => {
+                    console.log("Item added to cart successfully!");
+                },
+                onError: (errors) => {
+                    console.error("Error adding item to cart:", errors);
+                }
+            });
+        }
     };
 
     return (
         <div className="shop-container bg-gray-50 min-h-screen">
-            <Navbar />
-            {/* Search Bar */}
+            {auth ? <NavbarForAuth /> : <Navbar />}
+
             <div className="search-bar mb-10 mt-10 flex justify-center">
                 <input
                     type="text"
                     placeholder="Search medicines..."
-                    value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="border p-3 rounded-lg w-full max-w-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
             </div>
 
-            {/* Categories Filter */}
             <div className="categories mb-10 text-center mx-20">
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">Browse by Category</h2>
                 <div className="flex flex-wrap justify-center gap-6">
@@ -53,10 +78,9 @@ const ShopIndex = ({ medicines, categories }) => {
                         <button
                             key={category.id}
                             className={`py-2 px-6 rounded-lg text-lg font-medium
-                          ${selectedCategory === category.id
+                              ${selectedCategory === category.id
                                     ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-200 text-gray-800 hover:bg-blue-600 hover:text-white'}
-                          transition-colors`}
+                                    : 'bg-gray-200 text-gray-800 hover:bg-blue-600 hover:text-white'}`}
                             onClick={() => handleCategoryChange(category.id)}
                         >
                             {category.name}
@@ -65,7 +89,6 @@ const ShopIndex = ({ medicines, categories }) => {
                 </div>
             </div>
 
-            {/* Medicines List */}
             <div className="medicines grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mx-20">
                 {filteredMedicines.map((medicine) => (
                     <div
@@ -107,13 +130,12 @@ const ShopIndex = ({ medicines, categories }) => {
                 ))}
             </div>
 
-            {/* Footer */}
             <footer className="mt-20 py-10 text-center text-gray-600">
                 <p className="text-sm">
                     © 2025 Medicine Shop | All Rights Reserved | Designed with ♥
                 </p>
             </footer>
-        </div >
+        </div>
     );
 };
 
